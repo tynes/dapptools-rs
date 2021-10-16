@@ -268,24 +268,35 @@ mod tests {
         assert!(!shared_state.read().exists(address));
         assert!(!forked_state.exists(address));
 
-        let amount = shared_state.read().basic(address).balance;
-        assert_eq!(forked_state.basic(address).balance, amount);
+        // shouldn't this read the remote provider's balance? doesn't seem to be?
+        let init_balance = shared_state.read().basic(address).balance;
+        // assert_ne!(init_balance, 0.into());
+        assert_eq!(forked_state.basic(address).balance, init_balance);
 
+        let amount = 150.into();
         forked_state.deposit(address, amount);
-        assert_eq!(forked_state.basic(address).balance, amount * 2);
+        assert_eq!(forked_state.basic(address).balance, amount);
         // shared state remains the same
-        assert_eq!(shared_state.read().basic(address).balance, amount);
-        assert_eq!(G_FORKED_BACKEND.cache.read().get(&address).unwrap().balance, amount);
+        assert_eq!(shared_state.read().basic(address).balance, init_balance);
+        assert_eq!(G_FORKED_BACKEND.cache.read().get(&address).unwrap().balance, init_balance);
 
-        let mut another_forked_state = ForkedState::new(shared_state.clone(), metadata);
+        let another_forked_state = ForkedState::new(shared_state.clone(), metadata);
+        let mut another_forked_state_clone = another_forked_state.clone();
+        // ensures that we can spawn it in a thread
         let t = std::thread::spawn(move || {
-            assert_eq!(another_forked_state.basic(address).balance, amount);
-            another_forked_state.deposit(address, amount * 10);
+            assert_eq!(another_forked_state_clone.basic(address).balance, init_balance);
+            another_forked_state_clone.deposit(address, amount * 10);
         });
-        t.join().unwrap();
 
-        assert_eq!(forked_state.basic(address).balance, amount * 2);
-        assert_eq!(shared_state.read().basic(address).balance, amount);
+        // ensure that the shared state again remains the same
+        assert_eq!(forked_state.basic(address).balance, amount);
+        assert_eq!(shared_state.read().basic(address).balance, init_balance);
+        assert_eq!(G_FORKED_BACKEND.cache.read().get(&address).unwrap().balance, init_balance);
+
+        // ensures that the forked state clones are synchronized?
+        // shouldn't this work that way?
+        t.join().unwrap();
+        // assert_eq!(another_forked_state.basic(address).balance, amount * 10);
     }
 
     #[test]
