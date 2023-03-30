@@ -276,7 +276,7 @@ impl ScriptArgs {
 
                 let mut deployments = self
                     .create_script_sequences(
-                        txs,
+                        txs.clone(),
                         &result,
                         &mut script_config,
                         decoder,
@@ -308,7 +308,7 @@ impl ScriptArgs {
                 } else if self.broadcast {
                     self.single_deployment(
                         deployments.first_mut().expect("to be set."),
-                        script_config,
+                        script_config.clone(),
                         libraries,
                         result,
                         verify,
@@ -321,6 +321,22 @@ impl ScriptArgs {
                 }
             } else {
                 shell::println("\nIf you wish to simulate on-chain transactions pass a RPC URL.")?;
+            }
+
+            if script_config.evm_opts.verbosity > 2 {
+                if script_config.config.tenderly_project.is_some() && script_config.config.tenderly_username.is_some() {
+                    let project = script_config.config.tenderly_project.unwrap();
+                    let username = script_config.config.tenderly_username.unwrap();
+                    for tx in txs {
+                        let from = tx.transaction.from();
+                        let to = tx.transaction.to();
+                        let network = tx.transaction.chain_id();
+                        let data = tx.transaction.data();
+
+                        let output = format!("\nhttps://dashboard.tenderly.co/{}/{}/simulator/new?network={:?}&contractAddress={:?}&rawFunctionInput={:?}&from={:?}", project, username, network, to, data, from);
+                        shell::println(output)?;
+                    }
+                }
             }
         }
         Ok(())

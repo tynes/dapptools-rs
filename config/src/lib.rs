@@ -204,6 +204,10 @@ pub struct Config {
     /// Multiple etherscan api configs and their aliases
     #[serde(default, skip_serializing_if = "EtherscanConfigs::is_empty")]
     pub etherscan: EtherscanConfigs,
+    /// Tenderly project name for printing Tenderly simulation URL.
+    pub tenderly_project: Option<String>,
+    /// Tenderly user name for printing Tenderly simulation URL.
+    pub tenderly_username: Option<String>,
     /// list of solidity error codes to always silence in the compiler output
     pub ignored_error_codes: Vec<SolidityErrorCode>,
     /// When true, compiler warnings are treated as errors
@@ -1761,6 +1765,8 @@ impl Default for Config {
             memory_limit: 2u64.pow(25),
             eth_rpc_url: None,
             etherscan_api_key: None,
+            tenderly_username: None,
+            tenderly_project: None,
             verbosity: 0,
             remappings: vec![],
             auto_detect_remappings: true,

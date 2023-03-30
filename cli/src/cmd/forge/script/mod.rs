@@ -194,6 +194,20 @@ pub struct ScriptArgs {
 
     #[clap(flatten)]
     pub retry: RetryArgs,
+
+    #[clap(
+        long,
+        help = "Tenderly Project Name",
+        env = "TENDERLY_PROJECT",
+    )]
+    pub tenderly_project: Option<String>,
+
+    #[clap(
+        long,
+        help = "Tenderly UserName",
+        env = "TENDERLY_USERNAME",
+    )]
+    pub tenderly_username: Option<String>,
 }
 
 // === impl ScriptArgs ===
